@@ -1,0 +1,27 @@
+server:
+  port: 8080
+
+spring:
+  application:
+    name: flight-agent
+  ai:
+    openai:
+      api-key: ${OPENAI_API_KEY:your-api-key-here}
+      chat:
+        options:
+          model: gpt-4
+          temperature: 0.7
+
+flight:
+  mcp:
+    server:
+      url: http://localhost:8081
+
+hotel:
+  agent:
+    url: http://localhost:8082
+
+logging:
+  level:
+    com.travel.ai: DEBUG
+    org.springframework.ai: DEBUG

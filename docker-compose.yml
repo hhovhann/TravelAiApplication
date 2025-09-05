@@ -1,0 +1,57 @@
+services:
+
+  mcp-flight-server:
+    build:
+      context: ./mcp-flight-server
+      dockerfile: Dockerfile
+    ports:
+      - "8081:8081"
+    environment:
+      - SPRING_PROFILES_ACTIVE=docker
+
+  mcp-hotel-server:
+    build:
+      context: ./mcp-hotel-server
+      dockerfile: Dockerfile
+    ports:
+      - "8083:8083"
+    environment:
+      - SPRING_PROFILES_ACTIVE=docker
+
+  flight-agent:
+    build:
+      context: ./flight-agent
+      dockerfile: Dockerfile
+    ports:
+      - "8080:8080"
+    depends_on:
+      - mcp-flight-server
+    environment:
+      - OPENAI_API_KEY=${OPENAI_API_KEY}
+      - FLIGHT_MCP_SERVER_URL=http://mcp-flight-server:8081
+
+  hotel-agent:
+    build:
+      context: ./hotel-agent
+      dockerfile: Dockerfile
+    ports:
+      - "8082:8082"
+    depends_on:
+      - mcp-hotel-server
+    environment:
+      - OPENAI_API_KEY=${OPENAI_API_KEY}
+      - HOTEL_MCP_SERVER_URL=http://mcp-hotel-server:8083
+
+  travel-orchestrator:
+    build:
+      context: ./travel-orchestrator
+      dockerfile: Dockerfile
+    ports:
+      - "9000:9000"
+    depends_on:
+      - flight-agent
+      - hotel-agent
+    environment:
+      - OPENAI_API_KEY=${OPENAI_API_KEY}
+      - AGENTS_FLIGHT_URL=http://flight-agent:8080
+      - AGENTS_HOTEL_URL=http://hotel-agent:8082
