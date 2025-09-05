@@ -1,0 +1,134 @@
+{
+  "id": "travel-ai-environment",
+  "name": "Travel AI - Local Development",
+  "values": [
+    {
+      "key": "orchestrator_url",
+      "value": "http://localhost:9000",
+      "description": "Travel Orchestrator main service URL",
+      "enabled": true
+    },
+    {
+      "key": "flight_agent_url",
+      "value": "http://localhost:8080",
+      "description": "Flight Agent service URL",
+      "enabled": true
+    },
+    {
+      "key": "hotel_agent_url",
+      "value": "http://localhost:8082",
+      "description": "Hotel Agent service URL",
+      "enabled": true
+    },
+    {
+      "key": "flight_mcp_url",
+      "value": "http://localhost:8081",
+      "description": "Flight MCP Server URL",
+      "enabled": true
+    },
+    {
+      "key": "hotel_mcp_url",
+      "value": "http://localhost:8083",
+      "description": "Hotel MCP Server URL",
+      "enabled": true
+    },
+    {
+      "key": "OPENAI_API_KEY",
+      "value": "your_openai_api_key_here",
+      "description": "OpenAI API Key - REPLACE WITH YOUR ACTUAL KEY",
+      "enabled": true,
+      "type": "secret"
+    },
+    {
+      "key": "base_wait_time",
+      "value": "1000",
+      "description": "Base wait time between requests (milliseconds)",
+      "enabled": true
+    },
+    {
+      "key": "timeout",
+      "value": "30000",
+      "description": "Request timeout (milliseconds)",
+      "enabled": true
+    },
+    {
+      "key": "flight_id",
+      "value": "JA123",
+      "description": "Sample flight ID for testing",
+      "enabled": true
+    },
+    {
+      "key": "hotel_id",
+      "value": "MAR001",
+      "description": "Sample hotel ID for testing",
+      "enabled": true
+    },
+    {
+      "key": "booking_id",
+      "value": "BK12345",
+      "description": "Sample booking ID for testing",
+      "enabled": true
+    },
+    {
+      "key": "test_date_departure",
+      "value": "2025-03-15",
+      "description": "Test departure date",
+      "enabled": true
+    },
+    {
+      "key": "test_date_return",
+      "value": "2025-03-22",
+      "description": "Test return date",
+      "enabled": true
+    },
+    {
+      "key": "test_from_location",
+      "value": "JFK",
+      "description": "Test departure location",
+      "enabled": true
+    },
+    {
+      "key": "test_to_location",
+      "value": "LHR",
+      "description": "Test destination location",
+      "enabled": true
+    },
+    {
+      "key": "test_hotel_location",
+      "value": "London",
+      "description": "Test hotel search location",
+      "enabled": true
+    },
+    {
+      "key": "test_passengers",
+      "value": "2",
+      "description": "Number of test passengers",
+      "enabled": true
+    },
+    {
+      "key": "test_rooms",
+      "value": "1",
+      "description": "Number of test hotel rooms",
+      "enabled": true
+    },
+    {
+      "key": "auth_token",
+      "value": "",
+      "description": "Authentication token (if auth is implemented)",
+      "enabled": false
+    },
+    {
+      "key": "session_id",
+      "value": "",
+      "description": "Session ID for chat continuity",
+      "enabled": true
+    },
+    {
+      "key": "correlation_id",
+      "value": "",
+      "description": "Request correlation ID for tracing",
+      "enabled": true
+    }
+  ],
+  "_postman_variable_scope": "environment"
+}

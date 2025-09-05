@@ -1,0 +1,32 @@
+server:
+  port: 9000
+
+spring:
+  application:
+    name: travel-orchestrator
+  ai:
+    openai:
+      api-key: ${OPENAI_API_KEY:your-api-key-here}
+      chat:
+        options:
+          model: gpt-4
+          temperature: 0.7
+
+agents:
+  flight:
+    url: http://localhost:8080
+  hotel:
+    url: http://localhost:8082
+
+mcp:
+  servers:
+    flight:
+      url: http://localhost:8081
+    hotel:
+      url: http://localhost:8083
+
+logging:
+  level:
+    com.travel.ai: DEBUG
+    org.springframework.ai: DEBUG
+    io.a2a: DEBUG
