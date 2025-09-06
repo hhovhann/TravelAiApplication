@@ -1,0 +1,82 @@
+#!/bin/bash
+
+BASE_URL="http://localhost:9000"
+FLIGHT_AGENT_URL="http://localhost:8080"
+HOTEL_AGENT_URL="http://localhost:8082"
+MCP_FLIGHT_URL="http://localhost:8081"
+MCP_HOTEL_URL="http://localhost:8083"
+
+echo "Testing Travel AI Application APIs..."
+
+# Test health endpoints
+echo "1. Testing service availability..."
+curl -s -o /dev/null -w "%{http_code}" $MCP_FLIGHT_URL/mcp/capabilities && echo " - MCP Flight Server: OK" || echo " - MCP Flight Server: FAIL"
+curl -s -o /dev/null -w "%{http_code}" $MCP_HOTEL_URL/mcp/capabilities && echo " - MCP Hotel Server: OK" || echo " - MCP Hotel Server: FAIL"
+curl -s -o /dev/null -w "%{http_code}" $BASE_URL/api/travel/agents/status && echo " - Travel Orchestrator: OK" || echo " - Travel Orchestrator: FAIL"
+
+echo ""
+echo "2. Testing MCP Flight Server..."
+curl -X POST $MCP_FLIGHT_URL/mcp \
+  -H "Content-Type: application/json" \
+  -d '{
+    "jsonrpc": "2.0",
+    "method": "tools/call",
+    "id": "test-1",
+    "params": {
+      "name": "search_flights",
+      "arguments": {
+        "from": "NYC",
+        "to": "LON",
+        "departureDate": "2024-12-15",
+        "passengers": 2,
+        "cabinClass": "economy"
+      }
+    }
+  }' | jq '.' || echo "MCP Flight test failed"
+
+echo ""
+echo "3. Testing MCP Hotel Server..."
+curl -X POST $MCP_HOTEL_URL/mcp \
+  -H "Content-Type: application/json" \
+  -d '{
+    "jsonrpc": "2.0",
+    "method": "tools/call",
+    "id": "test-2",
+    "params": {
+      "name": "search_hotels",
+      "arguments": {
+        "destination": "London",
+        "checkIn": "2024-12-15",
+        "checkOut": "2024-12-20",
+        "guests": 2
+      }
+    }
+  }' | jq '.' || echo "MCP Hotel test failed"
+
+echo ""
+echo "4. Testing Travel Orchestrator Chat..."
+curl -X POST $BASE_URL/api/travel/chat \
+  -H "Content-Type: application/json" \
+  -d '{
+    "message": "I need to plan a trip from New York to London for 2 people in December"
+  }' | jq '.' || echo "Chat test failed"
+
+echo ""
+echo "5. Testing Travel Plan Creation..."
+curl -X POST $BASE_URL/api/travel/plan \
+  -H "Content-Type: application/json" \
+  -d '{
+    "from": "New York",
+    "to": "London",
+    "departureDate": "2024-12-15",
+    "returnDate": "2024-12-22",
+    "passengers": 2,
+    "preferences": "business class, luxury hotel near city center"
+  }' | jq '.' || echo "Travel plan test failed"
+
+echo ""
+echo "6. Testing Agent Status..."
+curl -X GET $BASE_URL/api/travel/agents/status | jq '.' || echo "Agent status test failed"
+
+echo ""
+echo "API Testing Complete!"

@@ -2,13 +2,12 @@ package am.hhovhann.travel.ai.hotel.agent;
 
 import am.hhovhann.travel.ai.core.model.HotelRequest;
 import am.hhovhann.travel.ai.core.model.HotelResponse;
+import am.hhovhann.travel.ai.core.util.A2AMessageBuilder;
 import am.hhovhann.travel.ai.hotel.service.HotelService;
 import io.a2a.sdk.client.A2AClient;
-import io.a2a.spec.Message;
 import io.a2a.spec.MessageSendParams;
 import io.a2a.spec.SendMessageResponse;
 import org.springframework.ai.chat.client.ChatClient;
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Component;
 
@@ -19,31 +18,14 @@ import java.util.concurrent.CompletableFuture;
 public class HotelAgent {
     private final HotelService hotelService;
     private final ChatClient chatClient;
-    private final A2AClient flightAgentClient;
+    private final String flightAgentUrl;
 
-    @Autowired
     public HotelAgent(HotelService hotelService,
-                      ChatClient.Builder chatClientBuilder,
+                      ChatClient chatClient,
                       @Value("${flight.agent.url:http://localhost:8080}") String flightAgentUrl) {
         this.hotelService = hotelService;
-        this.chatClient = chatClientBuilder
-                .defaultSystem("""
-                You are a specialized Hotel Agent that helps users find, compare, and book accommodations.
-                You have access to hotel search and booking capabilities through MCP servers.
-                
-                Your responsibilities:
-                1. Understand user hotel requirements and preferences
-                2. Search for suitable hotels using available tools
-                3. Provide hotel recommendations with detailed explanations
-                4. Coordinate with Flight Agent when needed for complete travel planning
-                5. Handle hotel bookings and modifications
-                6. Consider proximity to airports, attractions, and transportation
-                
-                Always be helpful, accurate, and provide clear explanations for your recommendations.
-                When coordinating with other agents, be concise and specific about requirements.
-                """)
-                .build();
-        this.flightAgentClient = new A2AClient(flightAgentUrl);
+        this.chatClient = chatClient;
+        this.flightAgentUrl = flightAgentUrl;
     }
 
     public String processHotelRequest(String userMessage) {
@@ -73,12 +55,10 @@ public class HotelAgent {
 
     public String communicateWithFlightAgent(String message) {
         try {
-            Message agentMessage = new Message.Builder()
-                    .addTextPart(message)
-                    .build();
+            A2AClient flightAgentClient = new A2AClient(flightAgentUrl);
 
             MessageSendParams params = new MessageSendParams.Builder()
-                    .message(agentMessage)
+                    .message(A2AMessageBuilder.createTextMessage(message))
                     .build();
 
             SendMessageResponse response = flightAgentClient.sendMessage(params);

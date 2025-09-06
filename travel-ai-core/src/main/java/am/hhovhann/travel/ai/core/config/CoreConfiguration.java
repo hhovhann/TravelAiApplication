@@ -1,12 +1,12 @@
-package am.hhovhann.travel.ai.hotel.config;
+package am.hhovhann.travel.ai.core.config;
 
-import org.springframework.ai.chat.client.ChatClient;
+import com.fasterxml.jackson.databind.ObjectMapper;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.web.client.RestTemplate;
 
 @Configuration
-public class HotelAgentConfig {
+public class CoreConfiguration {
 
     @Bean
     public RestTemplate restTemplate() {
@@ -14,7 +14,7 @@ public class HotelAgentConfig {
     }
 
     @Bean
-    public ChatClient chatClient(ChatClient.Builder builder) {
-        return builder.build();
+    public ObjectMapper objectMapper() {
+        return new ObjectMapper();
     }
 }
