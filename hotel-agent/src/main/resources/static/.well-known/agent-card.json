@@ -1,0 +1,46 @@
+{
+  "name": "Hotel Agent",
+  "description": "AI agent for hotel search and booking via MCP servers",
+  "url": "http://localhost:8082/.well-known/agent.json",
+  "version": "1.0.0",
+  "protocolVersion": "2.5",
+  "capabilities": {
+    "streaming": true,
+    "pushNotifications": false,
+    "stateTransitionHistory": true
+  },
+  "defaultInputModes": [
+    "text"
+  ],
+  "defaultOutputModes": [
+    "text"
+  ],
+  "skills": [
+    {
+      "id": "hotel_search",
+      "name": "Hotel Search",
+      "description": "Search hotels via MCP server integration",
+      "tags": [
+        "hotels",
+        "search",
+        "mcp"
+      ],
+      "examples": [
+        "Find hotels in Paris"
+      ]
+    },
+    {
+      "id": "hotel_booking",
+      "name": "Hotel Booking",
+      "description": "Book hotels via MCP server integration",
+      "tags": [
+        "hotels",
+        "booking",
+        "mcp"
+      ],
+      "examples": [
+        "Book hotel room for 3 nights"
+      ]
+    }
+  ]
+}

@@ -39,24 +39,55 @@
             <version>${spring-ai.version}</version>
         </dependency>
         <dependency>
+            <groupId>org.slf4j</groupId>
+            <artifactId>slf4j-api</artifactId>
+<!--            <version>${slf4j.version}</version>-->
+        </dependency>
+        <dependency>
+            <groupId>ch.qos.logback</groupId>
+            <artifactId>logback-classic</artifactId>
+<!--            <version>${logback.version}</version>-->
+        </dependency>
+
+        <dependency>
             <groupId>me.paulschwarz</groupId>
             <artifactId>spring-dotenv</artifactId>
             <version>${spring-dotenv.version}</version>
         </dependency>
-        <dependency>
-            <groupId>io.github.a2asdk</groupId>
-            <artifactId>a2a-java-sdk-spec</artifactId>
-            <version>${a2a.version}</version>
-        </dependency>
+<!--        <dependency>-->
+<!--            <groupId>io.github.a2asdk</groupId>-->
+<!--            <artifactId>a2a-java-sdk-spec</artifactId>-->
+<!--            <version>${a2a.version}</version>-->
+<!--        </dependency>-->
+<!--        <dependency>-->
+<!--            <groupId>io.github.a2asdk</groupId>-->
+<!--            <artifactId>a2a-java-sdk-client</artifactId>-->
+<!--            <version>${a2a.version}</version>-->
+<!--        </dependency>-->
+<!--        <dependency>-->
+<!--            <groupId>io.github.a2asdk</groupId>-->
+<!--            <artifactId>a2a-java-sdk-server-common</artifactId>-->
+<!--            <version>${a2a.version}</version>-->
+<!--        </dependency>-->
         <dependency>
             <groupId>io.github.a2asdk</groupId>
             <artifactId>a2a-java-sdk-client</artifactId>
-            <version>${a2a.version}</version>
+            <version>0.3.0.Alpha1</version>
         </dependency>
         <dependency>
             <groupId>io.github.a2asdk</groupId>
-            <artifactId>a2a-java-sdk-server-common</artifactId>
-            <version>${a2a.version}</version>
+            <artifactId>a2a-java-sdk-reference-jsonrpc</artifactId>
+            <version>0.3.0.Alpha1</version>
+        </dependency>
+        <dependency>
+            <groupId>io.github.a2asdk</groupId>
+            <artifactId>a2a-java-sdk-client-transport-jsonrpc</artifactId>
+            <version>0.3.0.Alpha1</version>
+        </dependency>
+        <dependency>
+            <groupId>io.github.a2asdk</groupId>
+            <artifactId>a2a-java-sdk-reference-grpc</artifactId>
+            <version>0.3.0.Alpha1</version>
         </dependency>
     </dependencies>
 </project>

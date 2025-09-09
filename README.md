@@ -41,8 +41,8 @@ The system consists of several microservices that work together:
 
 - **Java 21** with Virtual Threads
 - **Spring Boot 3.3.0**
-- **Spring AI 1.0.1**
-- **A2A Java SDK 0.2.5**
+- **Spring AI 1.0.1 https://spring.io/blog/2025/08/08/spring-ai-1**
+- **A2A Java SDK 0.2.5 https://github.com/a2aproject/a2a-java**
 - **OpenAI GPT-4**
 - **H2 Database** (for development)
 - **Maven** (multi-module project)

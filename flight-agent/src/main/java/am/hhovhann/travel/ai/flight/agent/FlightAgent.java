@@ -4,7 +4,17 @@ import am.hhovhann.travel.ai.core.util.A2AMessageBuilder;
 import am.hhovhann.travel.ai.core.model.FlightRequest;
 import am.hhovhann.travel.ai.core.model.FlightResponse;
 import am.hhovhann.travel.ai.flight.service.FlightService;
-import io.a2a.client.A2AClient;
+//import io.a2a.client.A2AClient;
+import io.a2a.client.Client;
+import io.a2a.client.ClientEvent;
+import io.a2a.client.MessageEvent;
+import io.a2a.client.TaskEvent;
+import io.a2a.client.TaskUpdateEvent;
+import io.a2a.client.config.ClientConfig;
+import io.a2a.client.http.A2ACardResolver;
+import io.a2a.client.transport.jsonrpc.JSONRPCTransport;
+import io.a2a.client.transport.jsonrpc.JSONRPCTransportConfig;
+import io.a2a.spec.AgentCard;
 import io.a2a.spec.MessageSendParams;
 import io.a2a.spec.SendMessageResponse;
 import org.springframework.ai.chat.client.ChatClient;
@@ -13,6 +23,8 @@ import org.springframework.stereotype.Component;
 
 import java.util.List;
 import java.util.concurrent.CompletableFuture;
+import java.util.function.BiConsumer;
+import java.util.function.Consumer;
 
 @Component
 public class FlightAgent {
@@ -55,7 +67,46 @@ public class FlightAgent {
 
     public String communicateWithHotelAgent(String flightDetails, String destination) {
         try {
-            A2AClient hotelAgentClient = new A2AClient(hotelAgentUrl);
+            // First, get the agent card for the A2A server agent you want to connect to
+            AgentCard agentCard = new A2ACardResolver(hotelAgentUrl).getAgentCard();
+
+            // Specify configuration for the ClientBuilder
+            ClientConfig clientConfig = new ClientConfig.Builder()
+                    .setAcceptedOutputModes(List.of("text"))
+                    .build();
+
+            // Create event consumers to handle responses that will be received from the A2A server
+            // (these consumers will be used for both streaming and non-streaming responses)
+            List<BiConsumer<ClientEvent, AgentCard>> consumers = List.of(
+                    (event, card) -> {
+                        if (event instanceof MessageEvent messageEvent) {
+                            // handle the messageEvent.getMessage()
+
+                        } else if (event instanceof TaskEvent taskEvent) {
+                            // handle the taskEvent.getTask()
+
+                        } else if (event instanceof TaskUpdateEvent updateEvent) {
+                            // handle the updateEvent.getTask()
+
+                        }
+                    }
+            );
+
+            // Create a handler that will be used for any errors that occur during streaming
+            Consumer<Throwable> errorHandler = error -> {
+                // handle the error.getMessage()
+            };
+
+            // Create the client using the builder
+            Client client = Client
+                    .builder(agentCard)
+                    .clientConfig(clientConfig)
+                    .withTransport(JSONRPCTransport.class, new JSONRPCTransportConfig())
+                    .addConsumers(consumers)
+                    .streamingErrorHandler(errorHandler)
+                    .build();
+
+//            A2AClient hotelAgentClient = new A2AClient(hotelAgentUrl);
 
             String coordinationMessage = String.format("""
                     Flight coordination request:
@@ -65,12 +116,8 @@ public class FlightAgent {
                     Please find suitable hotels near the destination airport or city center.
                     """, destination, flightDetails);
 
-            MessageSendParams params = new MessageSendParams.Builder()
-                    .message(A2AMessageBuilder.createTextMessage(coordinationMessage))
-                    .build();
-
-            SendMessageResponse response = hotelAgentClient.sendMessage(params);
-            return "Coordinated with Hotel Agent. Task ID: " + response.getId();
+            client.sendMessage(A2AMessageBuilder.createTextMessage(coordinationMessage));
+            return "Coordinated with Hotel Agent.";
         } catch (Exception e) {
             return "Failed to communicate with Hotel Agent: " + e.getMessage();
         }

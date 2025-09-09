@@ -1,0 +1,46 @@
+{
+  "name": "Flight Agent",
+  "description": "AI agent for flight search and booking via MCP servers",
+  "url": "http://localhost:8080",
+  "version": "1.0.0",
+  "capabilities": {
+    "streaming": true,
+    "pushNotifications": false,
+    "stateTransitionHistory": true
+  },
+  "defaultInputModes": [
+    "text"
+  ],
+  "defaultOutputModes": [
+    "text"
+  ],
+  "skills": [
+    {
+      "id": "flight_search",
+      "name": "Flight Search",
+      "description": "Search flights via MCP server integration",
+      "tags": [
+        "flights",
+        "search",
+        "mcp"
+      ],
+      "examples": [
+        "Find flights from NYC to London"
+      ]
+    },
+    {
+      "id": "flight_booking",
+      "name": "Flight Booking",
+      "description": "Book flights via MCP server integration",
+      "tags": [
+        "flights",
+        "booking",
+        "mcp"
+      ],
+      "examples": [
+        "Book flight for 2 passengers"
+      ]
+    }
+  ],
+  "protocolVersion": "0.2.5"
+}
