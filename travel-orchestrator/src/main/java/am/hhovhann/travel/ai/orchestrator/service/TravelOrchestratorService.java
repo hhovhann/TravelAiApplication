@@ -122,8 +122,7 @@ public class TravelOrchestratorService {
         Message request = A2A.toUserMessage(messageText);
         ClientCallContext clientCallContext = new ClientCallContext(new HashMap<>(), new HashMap<>());
         Consumer<Throwable> throwableConsumer = (Throwable error) -> {
-            LOGGER.error("Streaming error occurred: " + error.getMessage());
-            error.printStackTrace();
+            LOGGER.error("Streaming error occurred: {}", error.getMessage());
             responseFuture.completeExceptionally(error);
         };
 
