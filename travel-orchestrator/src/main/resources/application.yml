@@ -14,9 +14,9 @@ spring:
 
 agents:
   flight:
-    url: http://localhost:8080/flight/.well-known/agent-card.json
+    url: http://localhost:8080/flight
   hotel:
-    url: http://localhost:8082/hotel/.well-known/agent-card.json
+    url: http://localhost:8082/hotel
 
 mcp:
   servers:

@@ -1,7 +1,6 @@
 package am.hhovhann.travel.ai.orchestrator.service;
 
 import am.hhovhann.travel.ai.core.model.TravelPlan;
-import am.hhovhann.travel.ai.core.util.A2AMessageBuilder;
 import com.fasterxml.jackson.core.JsonProcessingException;
 import io.a2a.A2A;
 import io.a2a.client.Client;
@@ -20,8 +19,9 @@ import io.a2a.spec.A2AClientException;
 import io.a2a.spec.AgentCard;
 import io.a2a.spec.Message;
 import io.a2a.spec.Part;
-import io.a2a.spec.SendMessageResponse;
 import io.a2a.spec.TextPart;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.ai.chat.client.ChatClient;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
@@ -39,12 +39,12 @@ import static org.springframework.ai.model.ModelOptionsUtils.OBJECT_MAPPER;
 
 @Service
 public class TravelOrchestratorService {
+    private static final Logger LOGGER = LoggerFactory.getLogger(TravelOrchestratorService.class);
+
 
     private final ChatClient chatClient;
     private final String flightAgentUrl;
     private final String hotelAgentUrl;
-
-    // Lazy initialization to avoid startup issues
     private Client flightAgentClient;
     private Client hotelAgentClient;
 
@@ -52,7 +52,6 @@ public class TravelOrchestratorService {
             ChatClient.Builder chatClientBuilder,
             @Value("${agents.flight.url:http://localhost:8080/}") String flightAgentUrl,
             @Value("${agents.hotel.url:http://localhost:8082/}") String hotelAgentUrl) {
-
         this.flightAgentUrl = flightAgentUrl;
         this.hotelAgentUrl = hotelAgentUrl;
         this.chatClient = chatClientBuilder
@@ -72,117 +71,91 @@ public class TravelOrchestratorService {
                 .build();
     }
 
-    private Client getFlightAgentClient() {
+    // Common client initialization method
+    private Client initializeAgentClient(String agentType, String agentUrl, String agentCardPath) {
+        try {
+            AgentCard agentCard = new A2ACardResolver(
+                    new JdkA2AHttpClient(),
+                    agentUrl,
+                    agentCardPath
+            ).getAgentCard();
+
+            ClientConfig clientConfig = new ClientConfig.Builder()
+                    .setAcceptedOutputModes(List.of("text"))
+                    .setStreaming(false)
+                    .build();
+
+            return Client.builder(agentCard)
+                    .clientConfig(clientConfig)
+                    .withTransport(JSONRPCTransport.class, new JSONRPCTransportConfig())
+                    .build();
+        } catch (Exception e) {
+            throw new RuntimeException("Failed to create " + agentType + " agent client: " + e.getMessage(), e);
+        }
+    }
+
+    private synchronized Client getFlightAgentClient() {
         if (flightAgentClient == null) {
-            try {
-                // Create A2A client that will fetch agent card from the flight agent
-                // First, get the agent card for the A2A server agent you want to connect to
-                AgentCard agentCard = new A2ACardResolver(
-                        new JdkA2AHttpClient(),
-                        "http://localhost:8080/flight",
-                        flightAgentUrl
-                ).getAgentCard();
-
-                // Specify configuration for the ClientBuilder
-                ClientConfig clientConfig = new ClientConfig.Builder()
-                        .setAcceptedOutputModes(List.of("text"))
-                        .build();
-
-                // Create event consumers to handle responses that will be received from the A2A server
-                // (these consumers will be used for both streaming and non-streaming responses)
-                List<BiConsumer<ClientEvent, AgentCard>> consumers = List.of(
-                        (event, card) -> {
-                            if (event instanceof MessageEvent messageEvent) {
-                                // handle the messageEvent.getMessage()
-
-                            } else if (event instanceof TaskEvent taskEvent) {
-                                // handle the taskEvent.getTask()
-
-                            } else if (event instanceof TaskUpdateEvent updateEvent) {
-                                // handle the updateEvent.getTask()
-
-                            }
-                        }
-                );
-
-                // Create a handler that will be used for any errors that occur during streaming
-                Consumer<Throwable> errorHandler = error -> {
-                    // handle the error.getMessage()
-                };
-
-                // Create the client using the builder
-                flightAgentClient = Client
-                        .builder(agentCard)
-                        .clientConfig(clientConfig)
-                        .withTransport(JSONRPCTransport.class, new JSONRPCTransportConfig())
-                        .addConsumers(consumers)
-                        .streamingErrorHandler(errorHandler)
-                        .build();
-            } catch (Exception e) {
-                throw new RuntimeException("Failed to create flight agent A2A client: " + e.getMessage(), e);
-            }
+            flightAgentClient = initializeAgentClient(
+                    "flight",
+                    flightAgentUrl,
+                    flightAgentUrl + "/.well-known/agent-card.json"
+            );
         }
         return flightAgentClient;
     }
 
-    private Client getHotelAgentClient() {
+    private synchronized Client getHotelAgentClient() {
         if (hotelAgentClient == null) {
-            try {
-                // Create A2A client that will fetch agent card from the flight agent
-                // First, get the agent card for the A2A server agent you want to connect to
-                AgentCard agentCard = new A2ACardResolver(
-                        new JdkA2AHttpClient(),
-                        "http://localhost:8080/hotel",
-                        hotelAgentUrl
-                ).getAgentCard();
-                // Specify configuration for the ClientBuilder
-                ClientConfig clientConfig = new ClientConfig.Builder()
-                        .setAcceptedOutputModes(List.of("text"))
-                        .build();
-
-                // Create event consumers to handle responses that will be received from the A2A server
-                // (these consumers will be used for both streaming and non-streaming responses)
-                List<BiConsumer<ClientEvent, AgentCard>> consumers = List.of(
-                        (event, card) -> {
-                            if (event instanceof MessageEvent messageEvent) {
-                                // handle the messageEvent.getMessage()
-
-                            } else if (event instanceof TaskEvent taskEvent) {
-                                // handle the taskEvent.getTask()
-
-                            } else if (event instanceof TaskUpdateEvent updateEvent) {
-                                // handle the updateEvent.getTask()
-
-                            }
-                        }
-                );
-
-                // Create a handler that will be used for any errors that occur during streaming
-                Consumer<Throwable> errorHandler = error -> {
-                    // handle the error.getMessage()
-                };
-
-                // Create the client using the builder
-                hotelAgentClient = Client
-                        .builder(agentCard)
-                        .clientConfig(clientConfig)
-                        .withTransport(JSONRPCTransport.class, new JSONRPCTransportConfig())
-                        .addConsumers(consumers)
-                        .streamingErrorHandler(errorHandler)
-                        .build();
-            } catch (Exception e) {
-                throw new RuntimeException("Failed to create hotel agent A2A client: " + e.getMessage(), e);
-            }
+            hotelAgentClient = initializeAgentClient(
+                    "hotel",
+                    hotelAgentUrl,
+                    hotelAgentUrl + "/.well-known/agent-card.json"
+            );
         }
         return hotelAgentClient;
+    }
+
+    // Improved send message method that properly handles responses
+    private CompletableFuture<String> sendA2AMessage(Client client, String messageText) {
+        CompletableFuture<String> responseFuture = new CompletableFuture<>();
+        Message request = A2A.toUserMessage(messageText);
+        ClientCallContext clientCallContext = new ClientCallContext(new HashMap<>(), new HashMap<>());
+        Consumer<Throwable> throwableConsumer = (Throwable error) -> {
+            LOGGER.error("Streaming error occurred: " + error.getMessage());
+            error.printStackTrace();
+            responseFuture.completeExceptionally(error);
+        };
+
+        BiConsumer<ClientEvent, AgentCard> biConsumer = (event, card) -> {
+            if (event instanceof MessageEvent messageEvent) {
+                StringBuilder textBuilder = new StringBuilder();
+                for (Part<?> part : messageEvent.getMessage().getParts()) {
+                    if (part instanceof TextPart textPart) {
+                        textBuilder.append(textPart.getText());
+                    }
+                }
+                responseFuture.complete(textBuilder.toString());
+            } else if (event instanceof TaskEvent taskEvent) {
+                responseFuture.complete("Task created: " + taskEvent.getTask().getId());
+            } else if (event instanceof TaskUpdateEvent updateEvent) {
+                responseFuture.complete("Task updated: " + updateEvent.getTask().getId());
+            }
+        };
+
+        try {
+            client.sendMessage(request, List.of(biConsumer), throwableConsumer, clientCallContext);
+        } catch (Exception e) {
+            responseFuture.completeExceptionally(e);
+        }
+
+        return responseFuture;
     }
 
     public CompletableFuture<TravelPlan> planTrip(Map<String, Object> travelRequest) {
         return CompletableFuture.supplyAsync(() -> {
             try {
                 String tripId = UUID.randomUUID().toString();
-
-                // Extract travel details
                 String from = (String) travelRequest.get("from");
                 String to = (String) travelRequest.get("to");
                 String departureDate = (String) travelRequest.get("departureDate");
@@ -190,66 +163,57 @@ public class TravelOrchestratorService {
                 String preferences = (String) travelRequest.get("preferences");
                 Integer passengers = (Integer) travelRequest.get("passengers");
 
-                // Use Spring AI to create coordination strategy
+                // Create coordination plan
                 String coordinationPlan = chatClient.prompt()
                         .user(String.format("""
-                                Create a travel coordination plan for:
-                                - Trip: %s to %s
-                                - Departure: %s, Return: %s
-                                - Passengers: %d
-                                - Preferences: %s
-                                
-                                Outline the flight and hotel requirements to coordinate with specialized agents.
-                                """, from, to, departureDate, returnDate, passengers != null ? passengers : 1, preferences))
+                                        Create a travel coordination plan for:
+                                        - Trip: %s to %s
+                                        - Departure: %s, Return: %s
+                                        - Passengers: %d
+                                        - Preferences: %s
+                                        Outline the flight and hotel requirements.
+                                        """, from, to, departureDate, returnDate,
+                                passengers != null ? passengers : 1, preferences))
                         .call()
                         .content();
 
-                // Coordinate with Flight Agent via A2A
-                String flightMessage = String.format(
-                        "Search for flights from %s to %s, departing %s, returning %s. %d passengers. Preferences: %s",
-                        from, to, departureDate, returnDate, passengers != null ? passengers : 1, preferences
+                // Coordinate with agents asynchronously
+                CompletableFuture<String> flightFuture = sendA2AMessage(
+                        getFlightAgentClient(),
+                        String.format("Search for flights from %s to %s, departing %s, returning %s. %d passengers. Preferences: %s",
+                                from, to, departureDate, returnDate, passengers != null ? passengers : 1, preferences)
                 );
 
-                SendMessageResponse flightResponse = sendA2AMessage(getFlightAgentClient(), flightMessage);
-
-                // Coordinate with Hotel Agent via A2A
-                String hotelMessage = String.format(
-                        "Find hotels in %s for check-in %s, check-out %s. %d guests. Consider proximity to airport and city center. Preferences: %s",
-                        to, departureDate, returnDate, passengers != null ? passengers : 1, preferences
+                CompletableFuture<String> hotelFuture = sendA2AMessage(
+                        getHotelAgentClient(),
+                        String.format("Find hotels in %s for check-in %s, check-out %s. %d guests. Preferences: %s",
+                                to, departureDate, returnDate, passengers != null ? passengers : 1, preferences)
                 );
 
-                SendMessageResponse hotelResponse = sendA2AMessage(getHotelAgentClient(), hotelMessage);
+                // Combine results
+                String flightResponse = flightFuture.join();
+                String hotelResponse = hotelFuture.join();
 
-                // Synthesize the responses using Spring AI
+                // Synthesize final recommendations
                 String finalRecommendations = chatClient.prompt()
                         .user(String.format("""
-                                        Synthesize these agent responses into a comprehensive travel plan:
-                                        
-                                        Coordination Plan: %s
-                                        
-                                        Flight Agent Response (ID: %s):
-                                        %s
-                                        
-                                        Hotel Agent Response (ID: %s):
-                                        %s
-                                        
-                                        Provide final recommendations and next steps.
-                                        """, coordinationPlan,
-                                flightResponse.getId(), getResponseContent(flightResponse),
-                                hotelResponse.getId(), getResponseContent(hotelResponse)))
+                                Synthesize these responses into a comprehensive travel plan:
+                                Coordination Plan: %s
+                                Flight Response: %s
+                                Hotel Response: %s
+                                """, coordinationPlan, flightResponse, hotelResponse))
                         .call()
                         .content();
 
                 return new TravelPlan(
                         tripId,
-                        null, // Would parse flight response for structured data
+                        null, // Would parse flight response
                         null, // Would parse return flight
                         null, // Would parse hotel responses
                         "coordinated",
                         preferences,
                         finalRecommendations
                 );
-
             } catch (Exception e) {
                 throw new RuntimeException("Failed to create travel plan: " + e.getMessage(), e);
             }
@@ -259,66 +223,47 @@ public class TravelOrchestratorService {
     public CompletableFuture<String> processChatMessage(String message) {
         return CompletableFuture.supplyAsync(() -> {
             try {
-                // Use Spring AI to analyze intent and create response strategy
+                // Analyze intent
                 String intentAnalysis = chatClient.prompt()
                         .user(String.format("""
-                                Analyze this travel request and determine the coordination strategy:
-                                
+                                Analyze this travel request:
                                 User Message: %s
-                                
-                                Available A2A agents:
-                                - Flight Agent: handles flight search, booking, recommendations
-                                - Hotel Agent: handles hotel search, booking, recommendations
-                                
-                                Should I involve specific agents? Provide initial response and coordination plan.
+                                Determine if flight, hotel, or both agents should be involved.
                                 """, message))
                         .call()
                         .content();
 
-                // Determine A2A agent involvement
-                if (message.toLowerCase().contains("flight") || message.toLowerCase().contains("fly")) {
-                    try {
-                        SendMessageResponse flightResponse = sendA2AMessage(getFlightAgentClient(), message);
-                        return intentAnalysis + "\n\nFlight Agent (A2A Response ID: " + flightResponse.getId() +
-                                "):\n" + getResponseContent(flightResponse);
-                    } catch (Exception e) {
-                        return intentAnalysis + "\n\nFlight Agent unavailable: " + e.getMessage();
-                    }
-                }
+                // Determine which agents to involve
+                boolean needsFlight = message.toLowerCase().contains("flight") ||
+                        message.toLowerCase().contains("fly");
+                boolean needsHotel = message.toLowerCase().contains("hotel") ||
+                        message.toLowerCase().contains("accommodation");
+                boolean needsBoth = message.toLowerCase().contains("trip") ||
+                        message.toLowerCase().contains("travel") ||
+                        message.toLowerCase().contains("plan");
 
-                if (message.toLowerCase().contains("hotel") || message.toLowerCase().contains("accommodation")) {
-                    try {
-                        SendMessageResponse hotelResponse = sendA2AMessage(getHotelAgentClient(), message);
-                        return intentAnalysis + "\n\nHotel Agent (A2A Response ID: " + hotelResponse.getId() +
-                                "):\n" + getResponseContent(hotelResponse);
-                    } catch (Exception e) {
-                        return intentAnalysis + "\n\nHotel Agent unavailable: " + e.getMessage();
-                    }
-                }
+                CompletableFuture<String> flightFuture = needsFlight || needsBoth ?
+                        sendA2AMessage(getFlightAgentClient(), "Travel request: " + message) :
+                        CompletableFuture.completedFuture("");
 
-                // For general travel planning, involve both agents
-                if (message.toLowerCase().contains("trip") || message.toLowerCase().contains("travel") ||
-                        message.toLowerCase().contains("plan")) {
-                    try {
-                        SendMessageResponse flightResponse = sendA2AMessage(getFlightAgentClient(),
-                                "Help with travel planning: " + message);
-                        SendMessageResponse hotelResponse = sendA2AMessage(getHotelAgentClient(),
-                                "Help with travel planning: " + message);
+                CompletableFuture<String> hotelFuture = needsHotel || needsBoth ?
+                        sendA2AMessage(getHotelAgentClient(), "Travel request: " + message) :
+                        CompletableFuture.completedFuture("");
 
-                        return intentAnalysis +
-                                "\n\nFlight Agent (A2A ID: " + flightResponse.getId() + "):\n" +
-                                getResponseContent(flightResponse) +
-                                "\n\nHotel Agent (A2A ID: " + hotelResponse.getId() + "):\n" +
-                                getResponseContent(hotelResponse);
-                    } catch (Exception e) {
-                        return intentAnalysis + "\n\nAgent coordination error: " + e.getMessage();
-                    }
-                }
+                String flightResponse = flightFuture.join();
+                String hotelResponse = hotelFuture.join();
 
-                return intentAnalysis;
-
+                return chatClient.prompt()
+                        .user(String.format("""
+                                Combine these responses:
+                                Intent Analysis: %s
+                                Flight Response: %s
+                                Hotel Response: %s
+                                """, intentAnalysis, flightResponse, hotelResponse))
+                        .call()
+                        .content();
             } catch (Exception e) {
-                return "I apologize, but I encountered an error processing your request: " + e.getMessage();
+                return "Error processing request: " + e.getMessage();
             }
         });
     }
@@ -332,54 +277,39 @@ public class TravelOrchestratorService {
                     "flightAgent", flightAgentStatus,
                     "hotelAgent", hotelAgentStatus,
                     "mcpServers", Map.of(
-                            "flightMcp", Map.of("url", "http://localhost:8081", "status", "operational"),
-                            "hotelMcp", Map.of("url", "http://localhost:8083", "status", "operational")
+                            "flightMcp", Map.of(
+                                    "url", "http://localhost:8081",
+                                    "status", "operational"
+                            ),
+                            "hotelMcp", Map.of(
+                                    "url", "http://localhost:8083",
+                                    "status", "operational"
+                            )
                     ),
                     "protocol", "A2A (Agent-to-Agent)",
                     "orchestrator", Map.of(
                             "version", "1.0.0",
-                            "features", java.util.List.of(
+                            "features", List.of(
                                     "A2A protocol communication",
                                     "Multi-agent coordination",
                                     "Spring AI integration",
                                     "MCP server integration"
                             )
-                    )
+                    ),
+                    "timestamp", System.currentTimeMillis()
             );
         } catch (Exception e) {
             return Map.of(
-                    "error", "Failed to get agent status: " + e.getMessage()
+                    "error", "Failed to get agent status: " + e.getMessage(),
+                    "timestamp", System.currentTimeMillis()
             );
-        }
-    }
-
-    private SendMessageResponse sendA2AMessage(Client client, String messageText) {
-        try {
-            Message message = A2AMessageBuilder.createTextMessage(messageText);
-
-            client.sendMessage(message);
-        } catch (Exception e) {
-            throw new RuntimeException("Failed to send A2A message: " + e.getMessage(), e);
-        }
-        return null;
-    }
-
-    private String getResponseContent(SendMessageResponse response) {
-        try {
-            if (response.getResult() != null) {
-                // Extract content based on result kind
-                String resultKind = response.getResult().getKind();
-                return "A2A Response (" + resultKind + "): Processing complete";
-            }
-            return "A2A Response ID: " + response.getId();
-        } catch (Exception e) {
-            return "A2A Response processing error: " + e.getMessage();
         }
     }
 
     private Map<String, Object> checkA2AAgentStatus(String agentType, String agentUrl) {
         try {
-            Client client = "flight".equals(agentType) ? getFlightAgentClient() : getHotelAgentClient();
+            Client client = agentType.equals("flight") ?
+                    getFlightAgentClient() : getHotelAgentClient();
             AgentCard card = client.getAgentCard();
 
             return Map.of(
