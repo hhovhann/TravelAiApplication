@@ -10,7 +10,7 @@ import java.util.Map;
 import java.util.concurrent.CompletableFuture;
 
 @RestController
-@RequestMapping("/api/travel")
+@RequestMapping("/api/v1/travel")
 @CrossOrigin(origins = "*")
 public class TravelController {
 

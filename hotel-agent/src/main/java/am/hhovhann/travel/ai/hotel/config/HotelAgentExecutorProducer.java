@@ -127,9 +127,9 @@ public class HotelAgentExecutorProducer {
             if (result.containsKey("hotels")) {
                 List<?> hotels = (List<?>) result.get("hotels");
                 return String.format("Found %d hotels. Here are the options: %s",
-                        hotels.size(), hotels.toString());
+                        hotels.size(), hotels);
             }
-            return "Hotel request processed: " + result.toString();
+            return "Hotel request processed: " + result;
         }
 
         private String extractTextFromMessage(Message message) {

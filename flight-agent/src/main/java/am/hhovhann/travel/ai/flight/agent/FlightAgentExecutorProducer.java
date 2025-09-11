@@ -26,8 +26,7 @@ public class FlightAgentExecutorProducer {
     @Value("${flight.mcp.server.url:http://localhost:8081}")
     private String flightMcpServerUrl;
 
-    // Agent Executor Bean - A2A SDK will use this to handle requests
-    @Bean
+    @Bean("flightAgentExecutor")
     public AgentExecutor flightAgentExecutor(McpClient mcpClient) {
         return new FlightA2AExecutor(mcpClient, flightMcpServerUrl);
     }
@@ -133,9 +132,9 @@ public class FlightAgentExecutorProducer {
             if (result.containsKey("flights")) {
                 List<?> flights = (List<?>) result.get("flights");
                 return String.format("Found %d flights. Here are the options: %s",
-                        flights.size(), flights.toString());
+                        flights.size(), flights);
             }
-            return "Flight request processed: " + result.toString();
+            return "Flight request processed: " + result;
         }
 
         private String extractTextFromMessage(Message message) {

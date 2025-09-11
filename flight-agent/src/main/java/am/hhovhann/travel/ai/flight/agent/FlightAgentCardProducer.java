@@ -2,7 +2,9 @@ package am.hhovhann.travel.ai.flight.agent;
 
 import io.a2a.spec.AgentCapabilities;
 import io.a2a.spec.AgentCard;
+import io.a2a.spec.AgentInterface;
 import io.a2a.spec.AgentSkill;
+import io.a2a.spec.TransportProtocol;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
@@ -17,14 +19,18 @@ public class FlightAgentCardProducer {
     @Value("${server.port:8080}")
     private String serverPort;
 
-    // Agent Card Bean - A2A SDK will automatically expose this
-    @Bean
+    @Bean("flightAgentCard")
     @Primary
     public AgentCard flightAgentCard() {
         return new AgentCard.Builder()
                 .name("Flight Agent")
                 .description("AI agent for flight search and booking via MCP servers")
-                .url("http://localhost:" + serverPort)
+                .url("http://localhost:" + serverPort + "/flight")
+                .preferredTransport(TransportProtocol.JSONRPC.asString())
+                .additionalInterfaces(List.of(
+                        new AgentInterface(TransportProtocol.JSONRPC.asString(), "http://localhost:" + serverPort + "/flight"),
+                        new AgentInterface(TransportProtocol.GRPC.asString(), "http://localhost:" + serverPort + "/flight")
+                ))
                 .version("1.0.0")
                 .capabilities(new AgentCapabilities.Builder()
                         .streaming(true)
@@ -49,7 +55,7 @@ public class FlightAgentCardProducer {
                                 .examples(List.of("Book flight for 2 passengers"))
                                 .build()
                 ))
-                .protocolVersion("0.2.5")
+                .protocolVersion("0.3.0")
                 .build();
     }
 }
