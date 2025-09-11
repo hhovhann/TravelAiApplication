@@ -131,6 +131,7 @@ public class SpringA2AInfrastructureConfig {
         @Override
         public void sendNotification(io.a2a.spec.Task task) {
             // No-op implementation
+            System.out.println("NoOpPushNotificationSender");
         }
     }
 }

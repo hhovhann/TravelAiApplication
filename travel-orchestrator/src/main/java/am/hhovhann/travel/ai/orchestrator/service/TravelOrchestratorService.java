@@ -77,7 +77,11 @@ public class TravelOrchestratorService {
             try {
                 // Create A2A client that will fetch agent card from the flight agent
                 // First, get the agent card for the A2A server agent you want to connect to
-                AgentCard agentCard = new A2ACardResolver(flightAgentUrl).getAgentCard();
+                AgentCard agentCard = new A2ACardResolver(
+                        new JdkA2AHttpClient(),
+                        "http://localhost:8080/flight",
+                        flightAgentUrl
+                ).getAgentCard();
 
                 // Specify configuration for the ClientBuilder
                 ClientConfig clientConfig = new ClientConfig.Builder()
@@ -126,8 +130,11 @@ public class TravelOrchestratorService {
             try {
                 // Create A2A client that will fetch agent card from the flight agent
                 // First, get the agent card for the A2A server agent you want to connect to
-                AgentCard agentCard = new A2ACardResolver(hotelAgentUrl).getAgentCard();
-
+                AgentCard agentCard = new A2ACardResolver(
+                        new JdkA2AHttpClient(),
+                        "http://localhost:8080/hotel",
+                        hotelAgentUrl
+                ).getAgentCard();
                 // Specify configuration for the ClientBuilder
                 ClientConfig clientConfig = new ClientConfig.Builder()
                         .setAcceptedOutputModes(List.of("text"))

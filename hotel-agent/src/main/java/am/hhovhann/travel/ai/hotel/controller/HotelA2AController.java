@@ -1,4 +1,4 @@
-package am.hhovhann.travel.ai.flight.controller;
+package am.hhovhann.travel.ai.hotel.controller;
 
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
@@ -38,31 +38,31 @@ import java.util.HashMap;
 import java.util.Map;
 
 @RestController
-@RequestMapping("/flight")
-public class FlightA2AController {
+@RequestMapping("/hotel")
+public class HotelA2AController {
 
-    private static final Logger LOGGER = LoggerFactory.getLogger(FlightA2AController.class);
+    private static final Logger LOGGER = LoggerFactory.getLogger(HotelA2AController.class);
 
-    private final AgentCard flightAgentCard;
+    private final AgentCard hotelAgentCard;
     private final JSONRPCHandler jsonRpcHandler;
     private final ObjectMapper objectMapper;
 
-    public FlightA2AController(
-            @Qualifier("flightAgentCard") AgentCard flightAgentCard,
-            @Qualifier("flightJSONRPCHandler") JSONRPCHandler jsonRpcHandler,
+    public HotelA2AController(
+            @Qualifier("hotelAgentCard") AgentCard hotelAgentCard,
+            @Qualifier("hotelJSONRPCHandler") JSONRPCHandler jsonRpcHandler,
             ObjectMapper objectMapper) {
-        this.flightAgentCard = flightAgentCard;
+        this.hotelAgentCard = hotelAgentCard;
         this.jsonRpcHandler = jsonRpcHandler;
         this.objectMapper = objectMapper;
     }
 
     /**
-     * Get flight agent card information
+     * Get hotel agent card information
      */
     @GetMapping("/.well-known/agent-card.json")
     public ResponseEntity<AgentCard> getAgentCard() {
-        LOGGER.debug("Serving flight agent card");
-        return ResponseEntity.ok(flightAgentCard);
+        LOGGER.debug("Serving hotel agent card");
+        return ResponseEntity.ok(hotelAgentCard);
     }
 
     /**
@@ -79,7 +79,7 @@ public class FlightA2AController {
             HttpServletRequest httpRequest) {
 
         ServerCallContext context = createCallContext(httpRequest);
-        LOGGER.debug("Handling flight non-streaming request");
+        LOGGER.debug("Handling hotel non-streaming request");
         LOGGER.debug("Request body: {}", requestBody);
 
         try {
@@ -99,7 +99,7 @@ public class FlightA2AController {
             return ResponseEntity.ok(response);
 
         } catch (Exception e) {
-            LOGGER.error("Error processing flight request", e);
+            LOGGER.error("Error processing hotel request", e);
             JSONRPCError error = new JSONRPCError(-32603, "Internal error: " + e.getMessage(), null);
             JSONRPCResponse<?> errorResponse = new JSONRPCErrorResponse("unknown", error);
             return ResponseEntity.internalServerError().body(errorResponse);

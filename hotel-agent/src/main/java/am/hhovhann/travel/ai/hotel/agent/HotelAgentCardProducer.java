@@ -1,8 +1,10 @@
-package am.hhovhann.travel.ai.hotel.config;
+package am.hhovhann.travel.ai.hotel.agent;
 
 import io.a2a.spec.AgentCapabilities;
 import io.a2a.spec.AgentCard;
+import io.a2a.spec.AgentInterface;
 import io.a2a.spec.AgentSkill;
+import io.a2a.spec.TransportProtocol;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
@@ -17,15 +19,19 @@ public class HotelAgentCardProducer {
     @Value("${server.port:8082}")
     private String serverPort;
 
-    @Bean
+    @Bean("hotelAgentCard")
     @Primary
     public AgentCard hotelAgentCard() {
         return new AgentCard.Builder()
                 .name("Hotel Agent")
                 .description("AI agent for hotel search and booking via MCP servers")
-                .url("http://localhost:" + serverPort + "/.well-known/agent.json")
+                .url("http://localhost:" + serverPort + "/hotel")
+                .preferredTransport(TransportProtocol.JSONRPC.asString())
+                .additionalInterfaces(List.of(
+                        new AgentInterface(TransportProtocol.JSONRPC.asString(), "http://localhost:" + serverPort + "/flight"),
+                        new AgentInterface(TransportProtocol.GRPC.asString(), "http://localhost:" + serverPort + "/flight")
+                ))
                 .version("1.0.0")
-                .protocolVersion("2.5")
                 .capabilities(new AgentCapabilities.Builder()
                         .streaming(true)
                         .pushNotifications(false)
@@ -49,6 +55,7 @@ public class HotelAgentCardProducer {
                                 .examples(List.of("Book hotel room for 3 nights"))
                                 .build()
                 ))
+                .protocolVersion("0.3.0")
                 .build();
     }
 }

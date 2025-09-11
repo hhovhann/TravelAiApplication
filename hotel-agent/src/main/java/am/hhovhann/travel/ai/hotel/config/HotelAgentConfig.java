@@ -1,9 +1,21 @@
 package am.hhovhann.travel.ai.hotel.config;
 
+import io.a2a.server.agentexecution.AgentExecutor;
+import io.a2a.server.events.QueueManager;
+import io.a2a.server.requesthandlers.DefaultRequestHandler;
+import io.a2a.server.requesthandlers.RequestHandler;
+import io.a2a.server.tasks.PushNotificationConfigStore;
+import io.a2a.server.tasks.PushNotificationSender;
+import io.a2a.server.tasks.TaskStore;
+import io.a2a.spec.AgentCard;
+import io.a2a.transport.jsonrpc.handler.JSONRPCHandler;
 import org.springframework.ai.chat.client.ChatClient;
 import org.springframework.ai.chat.model.ChatModel;
+import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
+
+import java.util.concurrent.Executor;
 
 @Configuration
 public class HotelAgentConfig {
@@ -24,5 +36,30 @@ public class HotelAgentConfig {
         // The chatModel parameter is automatically injected by Spring,
         // assuming you have the relevant Spring AI provider starter and configuration.
         return ChatClient.builder(chatModel).build();
+    }
+
+    @Bean("hotelRequestHandler")
+    public RequestHandler hotelRequestHandler(
+            @Qualifier("hotelAgentExecutor") AgentExecutor flightAgentExecutor,
+            TaskStore taskStore,
+            QueueManager queueManager,
+            PushNotificationConfigStore pushNotificationConfigStore,
+            PushNotificationSender pushNotificationSender,
+            @Qualifier("a2aExecutor") Executor executor) {
+
+        return new DefaultRequestHandler(
+                flightAgentExecutor,
+                taskStore,
+                queueManager,
+                pushNotificationConfigStore,
+                pushNotificationSender,
+                executor);
+    }
+
+    @Bean("hotelJSONRPCHandler")
+    public JSONRPCHandler hotelJSONRPCHandler(
+            @Qualifier("hotelAgentCard") AgentCard flightAgentCard,
+            @Qualifier("hotelRequestHandler") RequestHandler hotelRequestHandler) {
+        return new JSONRPCHandler(flightAgentCard, hotelRequestHandler);
     }
 }

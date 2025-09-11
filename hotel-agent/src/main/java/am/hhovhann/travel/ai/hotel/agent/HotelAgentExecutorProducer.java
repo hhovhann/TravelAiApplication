@@ -1,4 +1,4 @@
-package am.hhovhann.travel.ai.hotel.config;
+package am.hhovhann.travel.ai.hotel.agent;
 
 import am.hhovhann.travel.ai.core.mcp.model.McpClient;
 import am.hhovhann.travel.ai.core.util.A2AMessageBuilder;
@@ -51,6 +51,8 @@ public class HotelAgentExecutorProducer {
                 updater.startWork();
 
                 String userMessage = extractTextFromMessage(context.getMessage());
+
+                // Determine which MCP tool to call based on message content
                 String mcpResult = routeToMcpServer(userMessage);
 
                 TextPart responsePart = new TextPart(mcpResult, null);
@@ -80,6 +82,7 @@ public class HotelAgentExecutorProducer {
 
         private String routeToMcpServer(String userMessage) {
             try {
+                // Simple routing logic - in practice, you'd use AI to determine intent
                 if (userMessage.toLowerCase().contains("search") || userMessage.toLowerCase().contains("find")) {
                     return callMcpTool("search_hotels", parseHotelSearchParams(userMessage));
                 } else if (userMessage.toLowerCase().contains("book")) {
@@ -101,7 +104,7 @@ public class HotelAgentExecutorProducer {
                             }
                             return formatMcpResponse(response.result());
                         })
-                        .join();
+                        .join(); // For simplicity - in production, handle async properly
             } catch (Exception e) {
                 return "Failed to call MCP server: " + e.getMessage();
             }
