@@ -1,7 +1,6 @@
 package am.hhovhann.travel.ai.orchestrator.service;
 
 import am.hhovhann.travel.ai.core.model.TravelPlan;
-import com.fasterxml.jackson.core.JsonProcessingException;
 import io.a2a.A2A;
 import io.a2a.client.Client;
 import io.a2a.client.ClientEvent;
@@ -14,8 +13,6 @@ import io.a2a.client.http.JdkA2AHttpClient;
 import io.a2a.client.transport.jsonrpc.JSONRPCTransport;
 import io.a2a.client.transport.jsonrpc.JSONRPCTransportConfig;
 import io.a2a.client.transport.spi.interceptors.ClientCallContext;
-import io.a2a.spec.A2AClientError;
-import io.a2a.spec.A2AClientException;
 import io.a2a.spec.AgentCard;
 import io.a2a.spec.Message;
 import io.a2a.spec.Part;
@@ -31,11 +28,8 @@ import java.util.List;
 import java.util.Map;
 import java.util.UUID;
 import java.util.concurrent.CompletableFuture;
-import java.util.concurrent.TimeUnit;
 import java.util.function.BiConsumer;
 import java.util.function.Consumer;
-
-import static org.springframework.ai.model.ModelOptionsUtils.OBJECT_MAPPER;
 
 @Service
 public class TravelOrchestratorService {
@@ -45,15 +39,21 @@ public class TravelOrchestratorService {
     private final ChatClient chatClient;
     private final String flightAgentUrl;
     private final String hotelAgentUrl;
+    private final String flightMcpServerUrl;
+    private final String hotelMcpServerUrl;
     private Client flightAgentClient;
     private Client hotelAgentClient;
 
     public TravelOrchestratorService(
             ChatClient.Builder chatClientBuilder,
             @Value("${agents.flight.url:http://localhost:8080/}") String flightAgentUrl,
-            @Value("${agents.hotel.url:http://localhost:8082/}") String hotelAgentUrl) {
+            @Value("${agents.hotel.url:http://localhost:8082/}") String hotelAgentUrl,
+            @Value("${mcp.servers.flight.url:http://localhost:8081/}") String flightMcpServerUrl,  //mcp:
+            @Value("${mcp.servers.hotel.url:http://localhost:8083/}") String hotelMcpServerUrl) {
         this.flightAgentUrl = flightAgentUrl;
         this.hotelAgentUrl = hotelAgentUrl;
+        this.flightMcpServerUrl = flightMcpServerUrl;
+        this.hotelMcpServerUrl = hotelMcpServerUrl;
         this.chatClient = chatClientBuilder
                 .defaultSystem("""
                         You are a Travel Orchestrator that coordinates between Flight and Hotel agents to create comprehensive travel plans.
@@ -277,11 +277,11 @@ public class TravelOrchestratorService {
                     "hotelAgent", hotelAgentStatus,
                     "mcpServers", Map.of(
                             "flightMcp", Map.of(
-                                    "url", "http://localhost:8081",
+                                    "url", flightMcpServerUrl,
                                     "status", "operational"
                             ),
                             "hotelMcp", Map.of(
-                                    "url", "http://localhost:8083",
+                                    "url", hotelMcpServerUrl,
                                     "status", "operational"
                             )
                     ),
@@ -330,90 +330,6 @@ public class TravelOrchestratorService {
                     "protocol", "A2A",
                     "lastCheck", System.currentTimeMillis()
             );
-        }
-    }
-
-
-    public static void main(String[] args) throws A2AClientError, A2AClientException, JsonProcessingException, InterruptedException {
-        // First, get the agent card for the A2A server agent you want to connect to
-        AgentCard agentCard = new A2ACardResolver(
-                new JdkA2AHttpClient(),
-                "http://localhost:8080/flight",
-                "http://localhost:8080/flight/.well-known/agent-card.json"
-        ).getAgentCard();
-
-        System.out.println(OBJECT_MAPPER.writeValueAsString(agentCard));
-
-        final CompletableFuture<String> messageResponse = new CompletableFuture<>();
-
-        // Create the client using the builder
-        Client client = Client
-                .builder(agentCard)
-                .clientConfig( // Specify general client configuration and preferences for the ClientBuilder
-                        new ClientConfig.Builder()
-                                .setAcceptedOutputModes(List.of("text"))
-                                .setStreaming(false)
-                                .build())
-                .withTransport(JSONRPCTransport.class, new JSONRPCTransportConfig())
-                .addConsumers( //         // Create event consumers to handle responses that will be received from the A2A server
-                        // (these consumers will be used for both streaming and non-streaming responses)
-                        List.of(
-                                (event, card) -> {
-                                    if (event instanceof MessageEvent messageEvent) {
-                                        // handle the messageEvent.getMessage()
-                                        System.out.println("A2A message received: " + messageEvent.getMessage());
-                                        Message responseMessage = messageEvent.getMessage();
-                                        StringBuilder textBuilder = new StringBuilder();
-                                        if (responseMessage.getParts() != null) {
-                                            for (Part<?> part : responseMessage.getParts()) {
-                                                if (part instanceof TextPart textPart) {
-                                                    textBuilder.append(textPart.getText());
-                                                }
-                                            }
-                                        }
-                                        messageResponse.complete(textBuilder.toString());
-                                    } else if (event instanceof TaskEvent taskEvent) {
-                                        // handle the taskEvent.getTask()
-                                        System.out.println("A2A task received: " + taskEvent.getTask());
-
-                                    } else if (event instanceof TaskUpdateEvent updateEvent) {
-                                        // handle the updateEvent.getTask()
-                                        System.out.println("A2A task updated received: " + updateEvent.getUpdateEvent());
-                                    } else {
-                                        System.out.println("A2A unknown event received: " + event);
-                                    }
-                                }
-                        ))
-                .streamingErrorHandler(  // Create error handler for streaming errors
-                        (Throwable error) -> {
-                            System.err.println("Streaming error occurred: " + error.getMessage());
-                            error.printStackTrace();
-                            messageResponse.completeExceptionally(error);
-                        })
-                .build();
-
-        // 3. Create a ClientCallContext with metadata/headers
-        Map<String, Object> state = new HashMap<>();
-        state.put("conversation_id", "conv_123");
-        state.put("skill", "flight_search"); // Align with agent's skills
-
-        Map<String, String> headers = new HashMap<>();
-        headers.put("Authorization", "Bearer your_token_here"); // Replace with actual token if needed
-        headers.put("X-Request-ID", "req_" + System.currentTimeMillis());
-
-        ClientCallContext context = new ClientCallContext(state, headers);
-
-        // 4. Create and send the message
-        Message message = A2A.toUserMessage("Find flights from Yerevan to Paris on 2025-12-25");
-        System.out.println("Sending message: " + OBJECT_MAPPER.writeValueAsString(message));
-        client.sendMessage(message, context); // Pass the context here
-
-        // 5. Wait for the response
-        try {
-            String response = messageResponse.get(10, TimeUnit.SECONDS);
-            System.out.println("Response: " + response);
-        } catch (Exception e) {
-            System.err.println("Failed to get response: " + e.getMessage());
         }
     }
 }
