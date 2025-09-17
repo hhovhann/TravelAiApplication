@@ -6,7 +6,7 @@ import org.springframework.boot.autoconfigure.SpringBootApplication;
 
 @SpringBootApplication(scanBasePackages = "am.hhovhann.travel.ai", exclude = {ToolCallingAutoConfiguration.class})
 public class TravelOrchestratorApplication {
-    public static void main(String[] args) {
+    static void main(String[] args) {
         SpringApplication.run(TravelOrchestratorApplication.class, args);
     }
 }

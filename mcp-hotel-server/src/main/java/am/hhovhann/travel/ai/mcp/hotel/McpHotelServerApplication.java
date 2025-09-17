@@ -5,7 +5,7 @@ import org.springframework.boot.autoconfigure.SpringBootApplication;
 
 @SpringBootApplication(scanBasePackages = "am.hhovhann.travel.ai")
 public class McpHotelServerApplication {
-    public static void main(String[] args) {
+    static void main(String[] args) {
         SpringApplication.run(McpHotelServerApplication.class, args);
     }
 }

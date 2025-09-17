@@ -1,6 +1,6 @@
 # Travel AI Application
 
-A comprehensive multi-agent travel planning system built with Spring AI, Java 21 Virtual Threads, and Model Context Protocol (MCP) servers. The application demonstrates agent-to-agent (A2A) communication for coordinated flight and hotel booking.
+A comprehensive multi-agent travel planning system built with Spring AI, java 25 Virtual Threads, and Model Context Protocol (MCP) servers. The application demonstrates agent-to-agent (A2A) communication for coordinated flight and hotel booking.
 
 ## Architecture
 
@@ -35,11 +35,11 @@ The system consists of several microservices that work together:
 - **MCP Integration**: Model Context Protocol servers for each domain
 - **Multiple Providers**: Each MCP server aggregates multiple service providers
 - **Spring AI Integration**: Uses OpenAI GPT-4 for intelligent conversation handling
-- **Virtual Threads**: Java 21 virtual threads for efficient concurrent processing
+- **Virtual Threads**: java 25 virtual threads for efficient concurrent processing
 
 ## Technology Stack
 
-- **Java 21** with Virtual Threads
+- **java 25** with Virtual Threads
 - **Spring Boot 3.3.0**
 - **Spring AI 1.0.1 https://spring.io/blog/2025/08/08/spring-ai-1**
 - **A2A Java SDK 0.2.5 https://github.com/a2aproject/a2a-java**
@@ -64,7 +64,7 @@ travel-ai-application/
 
 ### Prerequisites
 
-1. **Java 21** or later
+1. **java 25** or later
 2. **Maven 3.6+**
 3. **OpenAI API Key**
 
